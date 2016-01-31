@@ -11,7 +11,7 @@
 
 #include <vector>
 #include <string>
-#include <thread>
+#include <pthread.h>
 #include <queue>
 #include <functional>
 
@@ -35,19 +35,19 @@ class Meep
 public:
     Meep(int num); //init thread_num
     void create_pool();
-    void *thread_call(void * data);
+    static void *thread_call(void * data);
     int move2pool(pthread_t pid);
     int move2busy(pthread_t pid);
     int addtask(Task * task);
     int stop();
     int get_task_num();
 private:
-    std::vector<Task> task_list;
-    bool shutdown;
-    int thread_num;
+    static std::vector<Task> task_list;
+    static bool shutdown;
+    static int thread_num;
     pthread_t * pthread_id;
-    pthread_mutex_t pthread_mutex;
-    pthread_cond_t pthread_cond;
+    static pthread_mutex_t pthread_mutex;
+    static pthread_cond_t pthread_cond;
     
 };
 

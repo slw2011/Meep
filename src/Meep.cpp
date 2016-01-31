@@ -41,7 +41,7 @@ void Meep::create_pool()
 {
     pthread_id=new pthread_t[thread_num];
     for (int i=0; i<thread_num; ++i) {
-        pthread_create(&pthread_id[i], NULL,thread_calL,NULL);
+        pthread_create(&pthread_id[i], NULL,thread_call,NULL);
     }
     return ;
 }
@@ -50,4 +50,17 @@ void Meep::create_pool()
 int Meep::get_task_num()
 {
     return thread_num;
+}
+
+int Meep::stop()
+{
+    if(shutdown)
+        return -1;
+    shutdown=true;
+    pthread_cond_broadcast(&pthread_cond);
+    for(int i=0;i<thread_num;++i)
+        pthread_join(pthread_id[i],NULL);
+    delete pthread_id;
+    pthread_mutex_destroy(&pthread_mutex);
+    pthread_cond_destroy(&pthread_cond);
 }
