@@ -20,11 +20,14 @@
 class Task
 {
 public:
+    friend class Meep;
     Task(){};
     Task(std::string name):
         task_name(name),task_data(nullptr){}
     void set_data(void *data);
+    void run();
 private:
+    static int sign;
     std::string task_name;
     void * task_data;
 };
@@ -38,13 +41,14 @@ public:
     static void *thread_call(void * data);
     int move2pool(pthread_t pid);
     int move2busy(pthread_t pid);
-    int addtask(Task * task);
+    void add_task(Task * task);
     int stop();
-    int get_task_num();
+    size_t get_task_num();
+    static pthread_mutex_t output_mutex;
 private:
-    static std::vector<Task> task_list;
+    static std::vector<Task *> task_list;
     static bool shutdown;
-    static int thread_num;
+    int thread_num;
     pthread_t * pthread_id;
     static pthread_mutex_t pthread_mutex;
     static pthread_cond_t pthread_cond;
