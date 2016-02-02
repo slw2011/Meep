@@ -17,22 +17,25 @@ int Task::sign=0;
 
 //Meep class static variable
 vector<Task *> Meep::task_list;
+vector<pthread_t > Meep::busy;
+vector<pthread_t > Meep::idle;
+
 bool Meep::shutdown=false;
 pthread_mutex_t Meep::pthread_mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t Meep::list_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t Meep::output_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t Meep::pthread_cond=PTHREAD_COND_INITIALIZER;
 
 //task class
-void Task::set_data(void *data)
+void Task::set_data(string data)
 {
     task_data=data;
 }
 
-void Task::run()
+void Task::run(pthread_t pid)
 {
     pthread_mutex_lock(&Meep::output_mutex);
-    cout<<(char *)task_data<<endl;
-    cout<<sign++<<endl;
+    cout<<pid<<":"<<task_data<<" "<<sign++<<endl;
     pthread_mutex_unlock(&Meep::output_mutex);
 }
 
@@ -43,6 +46,29 @@ Meep::Meep(int num)
     create_pool();
 }
 
+void Meep::move2busy(pthread_t move_pid)
+{
+    for (vector<pthread_t >::iterator index=idle.begin();index!=idle.end()&&idle.size()!=0;index++)
+    {
+        if (*index==move_pid)
+        {
+            idle.erase(index);
+        }
+    }
+    busy.push_back(move_pid);
+}
+
+void Meep::move2idle(pthread_t move_pid)
+{
+    for (auto index=busy.begin();index!=busy.end()&&busy.size()!=0;index++)
+    {
+        if (*index==move_pid)
+        {
+            busy.erase(index);
+        }
+    }
+    idle.push_back(move_pid);
+}
 
 void * Meep::thread_call(void * data)
 {
@@ -67,12 +93,17 @@ void * Meep::thread_call(void * data)
             task_list.erase(pointer);
         }
         pthread_mutex_unlock(&pthread_mutex);
-        pthread_mutex_lock(&output_mutex);
-        cout<<"The thread "<<self_tid<<" is running "<<endl;
-        pthread_mutex_unlock(&output_mutex);
-        task->run();
+        //run task
+        pthread_mutex_lock(&list_mutex);
+        move2busy(self_tid);
+        pthread_mutex_unlock(&list_mutex);
+        task->run(self_tid);
+        pthread_mutex_lock(&list_mutex);
+        move2idle(self_tid);
+        pthread_mutex_unlock(&list_mutex);
+
     }
-    
+
 }
 
 
@@ -81,6 +112,7 @@ void Meep::create_pool()
     pthread_id=new pthread_t[thread_num];
     for (int i=0; i<thread_num; ++i) {
         pthread_create(&pthread_id[i], NULL,thread_call,NULL);
+        idle.push_back(pthread_id[i]);
     }
     cout<<"Already create "<<thread_num<<" threads"<<endl;
     return ;
@@ -96,15 +128,15 @@ void Meep::add_task(Task *task)
 {
     pthread_mutex_lock(&pthread_mutex);
     task_list.push_back(task);
-    pthread_cond_signal(&pthread_cond);
     pthread_mutex_unlock(&pthread_mutex);
+    pthread_cond_signal(&pthread_cond);
 
 }
 
 int Meep::stop()
 {
     if(shutdown)
-        return -1;
+        return -1; //thread already exit
     shutdown=true;
     pthread_cond_broadcast(&pthread_cond);
     for(int i=0;i<thread_num;++i)
