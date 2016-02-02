@@ -4,7 +4,7 @@
 
 ##原理：
 
-![Smaller icon](https://github.com/Leviathan1995/Meep/raw/master/image/thread_pool.png)
+![image](https://github.com/Leviathan1995/Meep/raw/master/image/thread_pool.png)
 
 
 ##Basic usage:
