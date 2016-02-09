@@ -23,25 +23,32 @@ namespace Meep {
     {
     public:
         friend class Meep;
-        Task(){};
+        Task();
         Task(std::string data):
-        task_data(data){}
-        void set_data(std::string data);
+            task_data(data){};
+        ~Task();
+        inline void set_data(const std::string & data);
         void run(pthread_t pid);
     private:
         static int sign;
         std::string task_data;
     };
     
+    //inline function
+    void Task::set_data(const string & data)
+    {
+        task_data=data;
+    }
     //Thead pool class
-    class Meep
+    class Thread_pool
     {
     public:
-        Meep(int num); //init thread_num
+        Thread_pool(int num); //init thread_num
+        ~Thread_pool();
         void create_pool();
         static void *thread_call(void * data);
-        static void move2idle(pthread_t pid);
-        static void move2busy(pthread_t pid);
+        static void move2idle(const pthread_t pid);
+        static void move2busy(const pthread_t pid);
         void add_task(Task * task);
         int stop();
         size_t get_task_num();
