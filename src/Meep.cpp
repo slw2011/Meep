@@ -156,7 +156,7 @@ int Thread_pool::stop()
     pthread_cond_broadcast(&pthread_cond);
     for(int i=0;i<thread_num;++i)
         pthread_join(pthread_id[i],NULL);
-    delete pthread_id;
+    delete [] pthread_id;
     pthread_mutex_destroy(&pthread_mutex);
     pthread_cond_destroy(&pthread_cond);
     return 0;
