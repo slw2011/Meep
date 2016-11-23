@@ -23,7 +23,6 @@ int main()
         t_pool.add_task(&task);
     while (1)
     {
-        sleep(0);
         pthread_mutex_lock(&Thread_pool::output_mutex);
         cout<<"There are still "<<t_pool.get_task_num()<<" tasks need to handle"<<endl;
         pthread_mutex_unlock(&Thread_pool::output_mutex);
